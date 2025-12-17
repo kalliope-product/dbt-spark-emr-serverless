@@ -1,0 +1,19 @@
+{
+  "runtimeConfiguration": [
+    {
+      "classification": "spark-defaults",
+      "configurations": null,
+      "properties": {
+        "spark.sql.catalog.s3tables": "org.apache.iceberg.spark.SparkCatalog",
+        "spark.sql.catalog.s3tables.catalog-impl": "software.amazon.s3tables.iceberg.S3TablesCatalog",
+        "spark.sql.catalog.s3tables.warehouse": "arn:aws:s3tables:ap-southeast-1:676206908940:bucket/pvcom-cloud-dwh-dev-data-676206908940",
+        "spark.sql.catalog.glue.type": "glue",
+        "spark.sql.catalog.glue.io-impl": "org.apache.iceberg.aws.s3.S3FileIO",
+        "spark.sql.catalog.glue": "org.apache.iceberg.spark.SparkCatalog",
+        "spark.sql.extensions": "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+        "spark.sql.catalog.glue.warehouse": "s3://pvcb-cloud-dwh-dev-processed-676206908940/iceberg-warehouse/",
+        "spark.jars": "/usr/share/aws/iceberg/lib/iceberg-spark3-runtime.jar,s3://pvcb-cloud-dwh-dev-code-676206908940/jars/s3-tables-catalog-for-iceberg-runtime-0.1.8.jar"
+      }
+    }
+  ]
+}
