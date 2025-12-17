@@ -1,0 +1,25 @@
+name: Publish Package
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    name: Publish Package to PyPI
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup UV
+        uses: astral-sh/setup-uv@v7
+      - name: Install Python 3.13
+        run: uv python install 3.13
+      - name: Build
+        run: uv build
+      - name: Publish
+        run: uv publish

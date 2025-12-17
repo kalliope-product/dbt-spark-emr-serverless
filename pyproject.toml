@@ -1,0 +1,29 @@
+[build-system]
+# requires = ["hatchling"]
+# build-backend = "hatchling.build"
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dbt-spark-emr-serverless-addons"
+version = "0.1.4"
+description = "A dbt-spark adapter using Livy to connect to Spark clusters"
+authors = [
+    { name = "Thanh Tran", email = "thanhmt0612@gmail.com" }
+]
+maintainers = [
+    { name = "Thanh Tran", email = "thanhmt0612@gmail.com" }
+]
+requires-python = ">=3.10.0"
+readme = "README.md"
+license = { file = "LICENSE" }
+
+dependencies = [
+    "dbt-spark>=1.5.0,<2.0",
+    "httpx>=0.24.0,<1.0.0",
+    "boto3>=1.26.0,<2.0.0",
+]
+
+[project.urls]
+Repository = "https://github.com/kalliope-product/dbt-spark-emr-serverless.git"
+Issues = "https://github.com/kalliope-product/dbt-spark-emr-serverless/issues"
