@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dbt-spark-emr-serverless-addons"
-version = "0.1.4"
+version = "0.1.5"
 description = "A dbt-spark adapter using Livy to connect to Spark clusters"
 authors = [
     { name = "Thanh Tran", email = "thanhmt0612@gmail.com" }

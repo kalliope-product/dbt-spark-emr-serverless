@@ -361,7 +361,11 @@ class Cursor:
                 f"Statement {statement.id} in session {self.session.id} failed: {statement.output}"
             )
         # Parse the output
+        # logger.debug(statement)
         if statement.output:
+            if statement.output.get('status','') == 'error':
+                logger.warning(statement.output.get('evalue'))
+                raise DbtRuntimeError(statement.output.get('evalue'))
             output_data = statement.output.get("data", {}).get("application/json", {})
             self._schema = output_data.get("schema", {})
             self._rows = output_data.get("data", [])
@@ -433,25 +437,31 @@ class Connection:
         return Cursor(session=self._session, client=self._client)
 
 
+livy_global_session = None
+
+
 class EMRConnectionManager:
+
     def __init__(self, application_id: str):
-        self.livy_global_session = None
         self._client = EMRPySparkLivyClient(application_id=application_id)
         atexit.register(self.__exit__)
 
     def __exit__(self):
+        global livy_global_session
         # Close the cursor and connection
         logger.info("Closing global EMR Serverless session...")
-        if self.livy_global_session:
-            self._client.delete_session(self.livy_global_session.id)
+        if livy_global_session:
+            self._client.delete_session(livy_global_session.id)
             logger.debug(
-                f"Deleted global EMR Serverless session with id {self.livy_global_session.id}"
+                f"Deleted global EMR Serverless session with id {livy_global_session.id}"
             )
+        livy_global_session = None
         return True
 
     def connect(self, server_side_parameters: Optional[Dict[Any, str]] = None, session_name: str = "dbt-spark-livy-global-session") -> Connection:
+        global livy_global_session
         params = deepcopy(server_side_parameters) if server_side_parameters else {}
-        if self.livy_global_session is None:
+        if livy_global_session is None:
             execution_role_arn = params.pop(
                 "emr-serverless.session.executionRoleArn", ""
             )
@@ -484,12 +494,12 @@ class EMRConnectionManager:
                     f"Global session {session.id} is in state {session.state}, cannot proceed"
                 )
             logger.info(f"Created new global LIVY session with id {session.id}")
-            self.livy_global_session = session
+            livy_global_session = session
         else:
             logger.info(
-                f"Reusing existing global LIVY session with id {self.livy_global_session.id}"
+                f"Reusing existing global LIVY session with id {livy_global_session.id}"
             )
-        return Connection(client=self._client, session=self.livy_global_session)
+        return Connection(client=self._client, session=livy_global_session)
 
 
 class EMRConnectionWrapper(SparkConnectionWrapper):
@@ -504,14 +514,16 @@ class EMRConnectionWrapper(SparkConnectionWrapper):
 
     def cursor(self) -> "EMRConnectionWrapper":
         self._cursor = self.handle.cursor()
+        self._cursor.execute("USE s3tables")
         return self
 
     def cancel(self) -> None:
         logger.debug("NotImplemented: cancel")
 
     def close(self) -> None:
-        if self._cursor:
-            self._cursor.close()
+        logger.debug("I dont want close soon")
+        # if self._cursor:
+        #     self._cursor.close()
 
     def rollback(self, *args: Any, **kwargs: Any) -> None:
         logger.debug("NotImplemented: rollback")
@@ -525,11 +537,12 @@ class EMRConnectionWrapper(SparkConnectionWrapper):
             sql = sql.strip()[:-1]
 
         assert self._cursor, "Cursor not available"
+        res = None
         if bindings is None:
-            self._cursor.execute(sql)
+            res = self._cursor.execute(sql)
         else:
             bindings = [self._fix_binding(binding) for binding in bindings]
-            self._cursor.execute(sql, *bindings)
+            res = self._cursor.execute(sql, *bindings)
 
     @property
     def description(
